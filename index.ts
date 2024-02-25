@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerJsdoc, { Options } from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
 const app = express();
@@ -15,19 +15,26 @@ const pool = new Pool({
 
 app.use(express.json());
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
+const swaggerOptions: Options = {
+  swaggerDefinition: {
+    openapi: '3.0.1',
     info: {
       title: 'My API',
       version: '1.0.0',
       description: 'API Documentation',
     },
-    servers: [
-      {
-        url: `http://localhost:${PORT}`,
-      },
-    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{
+      bearerAuth: []
+    }],
   },
   apis: ['index.ts'],
 };
@@ -41,6 +48,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  * /register:
  *   post:
  *     summary: Register a new user
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -87,6 +96,8 @@ app.post('/register', async (req: Request, res: Response) => {
  * /login:
  *   post:
  *     summary: Login to the application
+ *     tags:
+ *       - Auth
  *     requestBody:
  *       required: true
  *       content:
@@ -166,6 +177,8 @@ function authenticateToken(req: Request, res: Response, next: Function) {
  * /user/me:
  *   get:
  *     summary: Get current user information
+ *     tags:
+ *       - User
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -213,6 +226,8 @@ app.get('/user/me', authenticateToken, async (req: Request, res: Response) => {
  * /post/create:
  *   post:
  *     summary: Create a new post
+ *     tags:
+ *       - Post
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -270,6 +285,8 @@ app.post('/post/create', authenticateToken, async (req: Request, res: Response) 
  * /posts:
  *   get:
  *     summary: Get posts created by the current user
+ *     tags:
+ *       - Post
  *     security:
  *       - bearerAuth: []
  *     responses:
