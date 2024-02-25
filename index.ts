@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
@@ -75,6 +75,7 @@ function authenticateToken(req: Request, res: Response, next: Function) {
     if (err) {
       return res.status(403).send('Invalid token');
     }
+    // @ts-ignore
     req.user = user;
     next();
   });
@@ -82,6 +83,7 @@ function authenticateToken(req: Request, res: Response, next: Function) {
 
 app.get('/user/me', authenticateToken, async (req: Request, res: Response) => {
   try {
+    // @ts-ignore
     const userId = req.user.userId;
 
     const client = await pool.connect();
@@ -107,6 +109,7 @@ app.post('/post/create', authenticateToken, async (req: Request, res: Response) 
       return res.status(400).send('Text is required');
     }
 
+    // @ts-ignore
     const userId = req.user.userId;
 
     const client = await pool.connect();
@@ -123,6 +126,7 @@ app.post('/post/create', authenticateToken, async (req: Request, res: Response) 
 
 app.get('/posts', authenticateToken, async (req: Request, res: Response) => {
   try {
+    // @ts-ignore
     const userId = req.user.userId;
 
     const client = await pool.connect();
