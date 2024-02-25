@@ -5,7 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://username:password@localhost:5432/mydatabase'
+  connectionString: process.env.DATABASE_URL
 });
 
 app.use(express.json());
