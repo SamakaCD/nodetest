@@ -2,9 +2,11 @@ import express, { Request, Response } from 'express';
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 const pool = new Pool({
@@ -13,6 +15,51 @@ const pool = new Pool({
 
 app.use(express.json());
 
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'My API',
+      version: '1.0.0',
+      description: 'API Documentation',
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+      },
+    ],
+  },
+  apis: ['app.ts'],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
+/**
+ * @swagger
+ * /register:
+ *   post:
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '201':
+ *         description: User registered successfully
+ *       '400':
+ *         description: Email and password are required
+ *       '500':
+ *         description: Internal Server Error
+ */
 app.post('/register', async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -35,6 +82,39 @@ app.post('/register', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login to the application
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Successful login, returns access token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       '400':
+ *         description: Email and password are required
+ *       '401':
+ *         description: Invalid email or password
+ *       '500':
+ *         description: Internal Server Error
+ */
 app.post('/login', async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -81,6 +161,32 @@ function authenticateToken(req: Request, res: Response, next: Function) {
   });
 }
 
+/**
+ * @swagger
+ * /user/me:
+ *   get:
+ *     summary: Get current user information
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Successful operation, returns user information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 email:
+ *                   type: string
+ *       '401':
+ *         description: Unauthorized, missing or invalid token
+ *       '404':
+ *         description: User not found
+ *       '500':
+ *         description: Internal Server Error
+ */
 app.get('/user/me', authenticateToken, async (req: Request, res: Response) => {
   try {
     // @ts-ignore
@@ -102,6 +208,41 @@ app.get('/user/me', authenticateToken, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /post/create:
+ *   post:
+ *     summary: Create a new post
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               text:
+ *                 type: string
+ *     responses:
+ *       '201':
+ *         description: Post created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 text:
+ *                   type: string
+ *       '400':
+ *         description: Text is required
+ *       '401':
+ *         description: Unauthorized, missing or invalid token
+ *       '500':
+ *         description: Internal Server Error
+ */
 app.post('/post/create', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { text } = req.body;
@@ -124,6 +265,32 @@ app.post('/post/create', authenticateToken, async (req: Request, res: Response) 
   }
 });
 
+/**
+ * @swagger
+ * /posts:
+ *   get:
+ *     summary: Get posts created by the current user
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Successful operation, returns user's posts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   text:
+ *                     type: string
+ *       '401':
+ *         description: Unauthorized, missing or invalid token
+ *       '500':
+ *         description: Internal Server Error
+ */
 app.get('/posts', authenticateToken, async (req: Request, res: Response) => {
   try {
     // @ts-ignore
