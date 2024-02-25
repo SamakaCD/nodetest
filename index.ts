@@ -29,7 +29,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['app.ts'],
+  apis: ['index.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
